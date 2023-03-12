@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html>
+<script>
+    //選択機体名テキスト
+    var playerState1 = 'selectR';
+    var playerState2 = 'selectRB';
+    var playerState3 = 'selectRBY';
+
+    //機体選択
+    var selectFlame;
+    //形態選択
+    var selectFlame02;
+    //確定選択
+    var confirmImage;
+    //機体の画像データ
+    var playerImage1;
+    var playerImage2;
+    var playerImage3;
+    var selecter;
+
+    //機体の速度・弾の種類のテキスト
+    var playerSpeedText1;
+    var playerSpeedText2;
+    var playerSpeedText3;
+    var playerBulletText1;
+    var playerBulletText2;
+    var playerBulletText3;
+
+    //セレクトシーン
+    class SelectScene extends Phaser.Scene {
+        //コンストラクタ
+        constructor() {
+            super({ key: 'SelectScene', active: false });
+        }
+        //起動時の初期化
+        preload() {
+            this.load.image('selectBack', 'assets/Select/selectBack.png');
+            this.load.image('stateFlame', 'assets/Select/state2.png');
+            this.load.image('selectFlame', 'assets/Select/flame.png');
+            this.load.image('selector', 'assets/Select/selector.png');
+            this.load.spritesheet('select01', 'assets/Select/select01.png', { frameWidth: 100, frameHeight: 130 });
+            this.load.spritesheet('select02', 'assets/Select/select02.png', { frameWidth: 100, frameHeight: 130 });
+            this.load.spritesheet('select03', 'assets/Select/select03.png', { frameWidth: 100, frameHeight: 130 });
+            this.load.audio('selectClick', 'audio/clickSound.mp3');
+            this.load.audio('selectClick01', 'audio/clickSound01.mp3');
+            this.load.audio('decision', 'audio/decisionSound.mp3');
+            this.load.audio('cancel', 'audio/cancelSound.mp3');
+        }
+        //実行開始時の初期化
+        create() {
+            //背景
+            this.add.image(200, 325, 'selectBack');
+            //機体背景フレーム
+            this.add.image(200, 160, 'stateFlame');
+            this.add.image(200, 310, 'stateFlame');
+            this.add.image(200, 460, 'stateFlame');
+            //確定背景フレーム
+            confirmImage = this.add.image(200, 580, 'stateFlame');
+            confirmImage.setScale(0.5, 0.5);
+            //機体画像
+            playerImage1 = this.physics.add.sprite(270, 175, 'select01');
+            playerImage2 = this.physics.add.sprite(270, 320, 'select02');
+            playerImage3 = this.physics.add.sprite(270, 465, 'select03');
+            selectFlame = this.add.image(270, 175, 'selector');
+            selectFlame02 = this.add.image(200, 160, 'selectFlame');
+            //テキスト
+            var titleText = this.add.text(20, 20, '機体選択');
+            titleText.setTint(0x00);
+            titleText.setFontSize(30);
+            titleText.setFontFamily("MPLUS1");
+            //形態文字
+            var formText = this.add.text(40, 100, '第一形態');
+            formText.setTint(0x00);
+            formText.setFontSize(20);
+            formText.setFontFamily("MPLUS1");
+            formText = this.add.text(40, 250, '第二形態');
+            formText.setTint(0x00);
+            formText.setFontSize(20);
+            formText.setFontFamily("MPLUS1");
+            formText = this.add.text(40, 400, '第三形態');
+            formText.setTint(0x00);
+            formText.setFontSize(20);
+            formText.setFontFamily("MPLUS1");
+            //機体速度
+            playerSpeedText1 = this.add.text(30, 170, "移動速度：C", { fill: '#000', fontFamily: 'MPLUS1' });
+            playerSpeedText2 = this.add.text(30, 320, "移動速度：A", { fill: '#000', fontFamily: 'MPLUS1' });
+            playerSpeedText3 = this.add.text(30, 470, "移動速度：B", { fill: '#000', fontFamily: 'MPLUS1' });
+            //光弾
+            playerBulletText1 = this.add.text(30, 190, "使用光弾：単発", { fill: '#000', fontFamily: 'MPLUS1' });
+            playerBulletText2 = this.add.text(30, 340, "使用光弾：貫通弾", { fill: '#000', fontFamily: 'MPLUS1' });
+            playerBulletText3 = this.add.text(30, 490, "使用光弾：複合", { fill: '#000', fontFamily: 'MPLUS1' });
+            //確定
+            var confirmText = this.add.text(140, 560, '機体確定');
+            confirmText.setTint(0x00);
+            confirmText.setFontSize(30);
+            confirmText.setFontFamily("MPLUS1");
+            //キー入力
+            Keys = this.input.keyboard.addKeys({
+                W: Phaser.Input.Keyboard.KeyCodes.W,
+                A: Phaser.Input.Keyboard.KeyCodes.A,
+                S: Phaser.Input.Keyboard.KeyCodes.S,
+                D: Phaser.Input.Keyboard.KeyCodes.D,
+                ENTER: Phaser.Input.Keyboard.KeyCodes.ENTER,
+                SPACE: Phaser.Input.Keyboard.KeyCodes.SPACE,
+                TAB: Phaser.Input.Keyboard.KeyCodes.TAB,
+            });
+            //音声データ
+            this.sound.add('selectClick');
+            this.sound.add('selectClick01');
+            this.sound.add('decision');
+            this.sound.add('cancel');
+        }
+        //更新処理
+        update() {
+            switch (selectFlame02.y) {
+                case 160:
+                    formOneSelect(this);
+                    break;
+                case 310:
+                    formTwoSelect(this);
+                    break;
+                case 460:
+                    formThreeSelect(this);
+                    break;
+                case 580:
+                    formConfirm(this);
+                    break;
+            }
+        }
+    }
+
+    //第一形態選択時
+    function formOneSelect(game) {
+        //右入力
+        if (Phaser.Input.Keyboard.JustDown(Keys.D)) {
+            var frame = playerImage1.frame.name;
+            frame = frame == 2 ? 0 : ++frame;
+            playerImage1.setFrame(frame);
+            playerImage2.setFrame(frame * 2);
+            playerImage3.setFrame(frame);
+            SetformText(frame);
+            game.sound.play('selectClick01');
+        }
+        //左入力
+        if (Phaser.Input.Keyboard.JustDown(Keys.A)) {
+            var frame = playerImage1.frame.name;
+            frame = frame == 0 ? 2 : --frame;
+            playerImage1.setFrame(frame);
+            playerImage2.setFrame(frame * 2);
+            playerImage3.setFrame(frame);
+            SetformText(frame);
+            game.sound.play('selectClick01');
+        }
+        //決定
+        if (Phaser.Input.Keyboard.JustDown(Keys.ENTER) || Phaser.Input.Keyboard.JustDown(Keys.S)) {
+            selectFlame.y += 150;
+            selectFlame02.y += 150;
+            game.sound.play('selectClick');
+        }
+    }
+
+    //第二形態選択時
+    function formTwoSelect(game) {
+        //第一形態選択に戻る
+        if (Phaser.Input.Keyboard.JustDown(Keys.W)) {
+            selectFlame.y -= 150;
+            selectFlame02.y -= 150;
+            game.sound.play('cancel');
+        }
+        //左右入力
+        if (Phaser.Input.Keyboard.JustDown(Keys.D) || Phaser.Input.Keyboard.JustDown(Keys.A)) {
+            var frame = playerImage2.frame.name;
+            frame = playerImage1.frame.name * 2 == frame ? ++frame : playerImage1.frame.name * 2;
+            playerImage2.setFrame(frame);
+            SetformText(frame + 3);
+            game.sound.play('selectClick01');
+        }
+        //決定
+        if (Phaser.Input.Keyboard.JustDown(Keys.ENTER) || Phaser.Input.Keyboard.JustDown(Keys.S)) {
+            selectFlame.setVisible(false);
+            selectFlame02.y += 150;
+            game.sound.play('selectClick');
+        }
+    }
+
+    //第三形態選択時
+    function formThreeSelect(game) {
+        //第二形態選択に戻る
+        if (Phaser.Input.Keyboard.JustDown(Keys.W)) {
+            selectFlame.setVisible(true);
+            selectFlame02.y -= 150;
+            game.sound.play('cancel');
+        }
+        //決定
+        if (Phaser.Input.Keyboard.JustDown(Keys.ENTER) || Phaser.Input.Keyboard.JustDown(Keys.S)) {
+            selectFlame02.setScale(0.5, 0.5);
+            selectFlame02.y += 120;
+            confirmImage.setTint(0xffff00);
+            game.sound.play('selectClick');
+        }
+    }
+
+    //機体選択確定
+    function formConfirm(game) {
+        //第三形態選択に戻る
+        if (Phaser.Input.Keyboard.JustDown(Keys.W)) {
+            selectFlame02.setScale(1, 1);
+            selectFlame02.y -= 120;
+            confirmImage.setTint(0xffffff);
+            game.sound.play('cancel');
+        }
+        //決定
+        if (Phaser.Input.Keyboard.JustDown(Keys.ENTER)) {
+            game.scene.start('GameScene');
+            selectFlame.setVisible(true);
+            selectFlame.y = 175;
+            selectFlame02.y = 160;
+            game.sound.play('decision');
+        }
+    }
+
+    //機体ステータス表示更新
+    function SetformText(type) {
+        switch (type) {
+            //赤
+            case 0:
+                playerState1 = 'selectR';
+                playerState2 = 'selectRB';
+                playerState3 = 'selectRBY';
+                playerSpeedText1.setText('移動速度:C');
+                playerBulletText1.setText('使用光弾：単発');
+                playerSpeedText2.setText('移動速度:B');
+                playerBulletText2.setText('使用光弾：貫通弾');
+                playerSpeedText3.setText('移動速度:A');
+                playerBulletText3.setText('使用光弾：複合');
+                break;
+            //青
+            case 1:
+                playerState1 = 'selectB';
+                playerState2 = 'selectBR';
+                playerState3 = 'selectBRY';
+                playerSpeedText1.setText('移動速度:B');
+                playerBulletText1.setText('使用光弾：貫通弾');
+                playerSpeedText2.setText('移動速度:A');
+                playerBulletText2.setText('使用光弾：単発・貫通弾');
+                playerSpeedText3.setText('移動速度:SS');
+                playerBulletText3.setText('使用光弾：複合');
+                break;
+            //黄
+            case 2:
+                playerState1 = 'selectY';
+                playerState2 = 'selectYR';
+                playerState3 = 'selectYRB';
+                playerSpeedText1.setText('移動速度:D');
+                playerBulletText1.setText('使用光弾：2点射');
+                playerSpeedText2.setText('移動速度:D');
+                playerBulletText2.setText('使用光弾：単発・2点射');
+                playerSpeedText3.setText('移動速度:B');
+                playerBulletText3.setText('使用光弾：複合');
+                break;
+            //赤青
+            case 3:
+                playerState2 = 'selectRB';
+                playerSpeedText2.setText('移動速度:B');
+                playerBulletText2.setText('使用光弾：貫通弾');
+                break;
+            //赤黄
+            case 4:
+                playerState2 = 'selectRY';
+                playerSpeedText2.setText('移動速度:D');
+                playerBulletText2.setText('使用光弾：2点射');
+                break;
+            //青赤
+            case 5:
+                playerState2 = 'selectBR';
+                playerSpeedText2.setText('移動速度:A');
+                playerBulletText2.setText('使用光弾：単発・貫通弾');
+                break;
+            //青黄
+            case 6:
+                playerState2 = 'selectBY';
+                playerSpeedText2.setText('移動速度:B');
+                playerBulletText2.setText('使用光弾：2点射・貫通弾');
+                break;
+            //黄赤
+            case 7:
+                playerState2 = 'selectYR';
+                playerSpeedText2.setText('移動速度:D');
+                playerBulletText2.setText('使用光弾：単発・2点射');
+                break;
+            //黄青
+            case 8:
+                playerState2 = 'selectYB';
+                playerSpeedText2.setText('移動速度:C');
+                playerBulletText2.setText('使用光弾：貫通弾・2点射');
+                break;
+        }
+    }
+</script>
+
+</html>

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<script>
+    //選択項目
+    var resultSelect = 0;
+    //選択カーソル：y座標
+    var selectCursor;
+
+    //リザルトシーン
+    class ResultScene extends Phaser.Scene {
+        //コンストラクタ
+        constructor() {
+            super({ key: 'ResultScene', active: false });
+        }
+        //起動時の初期化
+        preload() {
+
+        }
+        //実行開始時の初期化
+        create() {
+            //キー入力
+            Keys = this.input.keyboard.addKeys({
+                W: Phaser.Input.Keyboard.KeyCodes.W,
+                A: Phaser.Input.Keyboard.KeyCodes.A,
+                S: Phaser.Input.Keyboard.KeyCodes.S,
+                D: Phaser.Input.Keyboard.KeyCodes.D,
+                ENTER: Phaser.Input.Keyboard.KeyCodes.ENTER,
+            });
+            var type;
+            switch (playerNum) {
+                case 0:
+                    type = playerState1;
+                    break;
+                case 1:
+                    type = playerState2;
+                    break;
+                case 2:
+                    type = playerState3;
+                    break;
+            }
+            //使用機体画像の表示
+            var player = this.physics.add.sprite(200, 300, ConversionPlayer(type));
+            //結果テキスト
+            if (gameClear) {
+                var gameClearText = this.add.text(40, 100, 'ゲームクリア');
+                gameClearText.setFontSize(50);
+                gameClearText.setFontFamily("MPLUS1");
+            }
+            else {
+                var gameOverText = this.add.text(25, 100, 'ゲームオーバー');
+                gameOverText.setFontSize(50);
+                gameOverText.setFontFamily("MPLUS1");
+            }
+            //スコアテキスト
+            var scoreText = this.add.text(120, 400, 'SCORE：' + score);
+            scoreText.setFontSize(20);
+            scoreText.setFontFamily("MPLUS1");
+            //選択項目テキスト
+            var text01 = this.add.text(120, 500, '再挑戦');
+            text01.setFontFamily("MPLUS1");
+            var text02 = this.add.text(120, 550, '機体を変更して再挑戦');
+            text02.setFontFamily("MPLUS1");
+            var text03 = this.add.text(120, 600, 'タイトルへ');
+            text03.setFontFamily("MPLUS1");
+            selectCursor = this.add.text(100, 500, '➤');
+        }
+        //更新処理
+        update() {
+            if (Phaser.Input.Keyboard.JustDown(Keys.ENTER)) {
+                //再挑戦
+                if (selectCursor.y == 500) {
+                    this.scene.start("GameScene");
+                    gameClear = false;
+                    gameOver = false;
+                    score = 0;
+                    player
+                    playerNum=0;
+                    playerSpecialCount=0;
+                }
+                //機体を変更して再挑戦
+                if(selectCursor.y==550){
+                    this.scene.start("SelectScene");
+                    gameClear = false;
+                    gameOver = false;
+                    score = 0;
+                    playerState1="selectR";
+                    playerSpecialCount=0;
+                    playerNum=0;
+                }
+                //タイトル
+                if(selectCursor.y==600){
+                    this.scene.start("TitleScene");
+                    gameClear = false;
+                    gameOver = false;
+                    score = 0;
+                    playerState1="selectR";
+                    playerNum=0;
+                    playerSpecialCount=0;
+                }
+                this.sound.play('decision');
+            }
+            //上を選択
+            if (Phaser.Input.Keyboard.JustDown(Keys.W)) {
+                resultSelect = resultSelect == 0 ? 2 : resultSelect++;
+                selectCursor.y = selectCursor.y == 500 ? 600 : selectCursor.y - 50;
+                this.sound.play('selectClick');
+            }
+            //下を選択
+            if (Phaser.Input.Keyboard.JustDown(Keys.S)) {
+                resultSelect = resultSelect == 2 ? 0 : resultSelect--;
+                selectCursor.y = selectCursor.y == 600 ? 500 : selectCursor.y + 50;
+                this.sound.play('selectClick');
+            }
+        }
+
+
+    }
+
+    //選択機体の画像データを指定する関数
+    function ConversionPlayer(type) {
+        switch (type) {
+            case 'selectR':
+                return 'playerR';
+                break;
+            case 'selectB':
+                return 'playerB';
+                break;
+            case 'selectY':
+                return 'playerY';
+                break;
+            case 'selectRB':
+                return 'playerRB';
+                break;
+            case 'selectRY':
+                return 'playerRY';
+                break;
+            case 'selectBR':
+                return 'playerBR';
+                break;
+            case 'selectBY':
+                return 'playerBY';
+                break;
+            case 'selectYR':
+                return 'playerYR';
+                break;
+            case 'selectYB':
+                return 'playerYB';
+                break;
+            case 'selectRBY':
+                return 'playerRBY';
+                break;
+            case 'selectBRY':
+                return 'playerBRY';
+                break;
+            case 'selectYRB':
+                return 'playerYRB';
+                break;
+        }
+    }
+</script>
+
+</html>

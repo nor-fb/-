@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+    <script>
+        //タイトルシーン
+        class TitleScene extends Phaser.Scene{
+            //コンストラクタ
+                constructor(){
+                    super({key:'TitleScene',active:true});
+                }
+                //起動時の初期化
+                preload(){
+                    this.load.image('titleBack','assets/Title/TitleBack.png');
+                    this.load.audio('titleClick','audio/titleClickSound.mp3');
+                }
+                //実行開始時の初期化
+                create(){
+                    this.add.image(200,325,'titleBack');
+                    //テキスト
+                    var titleText=this.add.text(60,100,'タクシディ');
+                    titleText.setTint(0xffffff);
+                    titleText.setFontSize(60);
+                    titleText.setFontFamily("MPLUS1");
+                    var pressText=this.add.text(70,250,'Press Enter');
+                    pressText.setTint(0xffffff);
+                    pressText.setFontSize(40);
+                    
+                    //キー入力
+                    Keys=this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
+
+                    //サウンドデータ追加
+                    this.sound.add('titleClick');
+                    //テキスト(操作説明)
+                    var operationText=this.add.text(100,400,'～操作説明～');
+                    operationText.setFontFamily("MPLUS1");
+                    operationText=this.add.text(90,420,'選択・機体操作：WASD');
+                    operationText.setFontFamily("MPLUS1");
+                    operationText=this.add.text(90,440,'決定：Enter');
+                    operationText.setFontFamily("MPLUS1");
+                    operationText=this.add.text(90,460,'攻撃：Space');
+                    operationText.setFontFamily("MPLUS1");
+                    operationText=this.add.text(90,480,'固有能力使用：Shift');
+                    operationText.setFontFamily("MPLUS1");
+                    //テキスト(使用サウンドフリー素材のサイト)
+                    var text=this.add.text(10,570,'BGM・SEを使用させていただいたサイト');
+                    text.setFontFamily("MPLUS1");
+                    text=this.add.text(10,590,'・効果音ラボ');
+                    text.setFontFamily("MPLUS1");
+                    text=this.add.text(10,610,'・無料効果音で遊ぼう！');
+                    text.setFontFamily("MPLUS1");
+                    text=this.add.text(10,630,'・MusMus');
+                    text.setFontFamily("MPLUS1");
+                }
+                //更新処理
+                update(){
+                    if(Phaser.Input.Keyboard.JustDown(Keys)){
+                        this.sound.play('titleClick');
+                        this.scene.start("SelectScene");
+                    }
+                }
+        }
+    </script>
+</html>

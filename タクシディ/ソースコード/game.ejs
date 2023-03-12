@@ -1,0 +1,1558 @@
+<!DOCTYPE html>
+<html>
+<script>
+    var player;                 //プレイヤー
+    var bullet;                 //弾
+    var playerSpecial = false;  //プレイヤー特殊能力の使用フラグ
+    var playerNum = 0;          //プレイヤーの形態    
+    var bulletCount = 0;        //プレイヤーの光弾発射間隔カウント
+    var bulletWait = 50;        //発射間隔
+    var playerSpeed = 0;        //プレイヤーのスピード
+    var playerSpecialCount = 0; //プレイヤーの特殊能力カウント
+    var specialText;
+
+    var boss;           //BOSS
+    var bossHP = 0;     //BOSSのHP
+    var bossState = 0;  //BOSSの状態
+    var bossCount = 0;  //ダメージ時の演出用カウント
+    var bossWait = 0;   //BOSSの待機時間
+
+    //敵
+    var enemyA;
+    var enemyW;
+    var enemyDR;
+    var enemyDG;
+    var enemyDB;
+    var enemyFP;
+    var enemyFB;
+    var enemyFY;
+    //敵カウント
+    var enemyCountA = 0;
+    var enemyCountW = 0;
+    var enemyCountDR = 0;
+    var enemyCountDG = 0;
+    var enemyCountDB = 0;
+    var enemyCountFP = 0;
+    var enemyCountFP1 = 0;
+    var enemyCountFP2 = 0;
+    var enemyCountFB = 0;
+    var enemyCountFB1 = 0;
+    var enemyCountFB2 = 0;
+    var enemyCountFY = 0;
+    var enemyCountFY1 = 0;
+    var enemyCountFY2 = 0;
+    var enemyBullet_N;  //敵の通常弾
+    var enemyBullet_S;  //敵の特殊弾
+    //爆発
+    var explosion;
+
+    var gameClear = false;    //ゲームクリア
+    var gameOver = false;   //ゲームオーバー
+    var pauseFlag = false;    //ポーズフラグ
+    //背景
+    var backGround;
+    var backGround1;
+    var backGround2;
+
+    //バリア
+    var shield;
+    var shieldHP = 5;
+    var shieldFlag = false;
+
+    //削除用
+    var OffScreenUP;
+    var OffScreenDOWN;
+
+    //スコア用
+    var scoreText;
+    var score = 0;
+
+    //敵ウェーブ
+    var wave = 0;
+    var wavecount = 0;
+    var enemyCreateCount = 1000;
+    var nextWave = 0;
+
+    class GameScene extends Phaser.Scene {
+        //コンストラクタ
+        constructor() {
+            super({ key: 'GameScene', active: false });
+        }
+        //起動時の初期化
+        preload() {
+            //音声データ
+            this.load.audio('specialStart', 'audio/specialStart.mp3');
+            this.load.audio('specialEnd', 'audio/specialEnd.mp3');
+            this.load.audio('bullet', 'audio/bullet.mp3');
+            this.load.audio('bullet2', 'audio/bullet02.mp3');
+            this.load.audio('bullet3', 'audio/bullet03.mp3');
+            this.load.audio('explosionP', 'audio/explosionSound.mp3');
+            this.load.audio('explosionE', 'audio/explosionSound01.mp3');
+            this.load.audio('explosionB', 'audio/explosionSound02.mp3');
+            this.load.audio('explosionBD', 'audio/explosionSound03.mp3');
+            this.load.audio('shield', 'audio/shieldSound.mp3');
+            this.load.audio('bossStop', 'audio/bossStop.mp3');
+            this.load.audio('bgm01', 'audio/BGM01.mp3');
+            this.load.audio('bgm02', 'audio/BGM02.mp3');
+
+            //背景
+            this.load.image('gameBack', 'assets/Game/GameBack1.png');
+            //プレイヤー
+            this.load.spritesheet('playerR', 'assets/Game/PlayerR.png', { frameWidth: 50, frameHeight: 65 });
+            this.load.spritesheet('playerB', 'assets/Game/PlayerB.png', { frameWidth: 50, frameHeight: 65 });
+            this.load.spritesheet('playerY', 'assets/Game/PlayerY.png', { frameWidth: 50, frameHeight: 65 });
+            this.load.spritesheet('playerRB', 'assets/Game/PlayerRB.png', { frameWidth: 50, frameHeight: 65 });
+            this.load.spritesheet('playerRY', 'assets/Game/PlayerRY.png', { frameWidth: 50, frameHeight: 65 });
+            this.load.spritesheet('playerBR', 'assets/Game/PlayerBR.png', { frameWidth: 50, frameHeight: 65 });
+            this.load.spritesheet('playerBY', 'assets/Game/PlayerBY.png', { frameWidth: 50, frameHeight: 65 });
+            this.load.spritesheet('playerYR', 'assets/Game/PlayerYR.png', { frameWidth: 50, frameHeight: 65 });
+            this.load.spritesheet('playerYB', 'assets/Game/PlayerYB.png', { frameWidth: 50, frameHeight: 65 });
+            this.load.spritesheet('playerRBY', 'assets/Game/PlayerRBY.png', { frameWidth: 50, frameHeight: 65 });
+            this.load.spritesheet('playerBRY', 'assets/Game/PlayerBRY.png', { frameWidth: 50, frameHeight: 65 });
+            this.load.spritesheet('playerYRB', 'assets/Game/PlayerYRB.png', { frameWidth: 50, frameHeight: 65 });
+            //ボス
+            this.load.spritesheet('boss', 'assets/Game/Boss.png', { frameWidth: 170, frameHeight: 200 });
+            //敵
+            this.load.spritesheet('enemyA', 'assets/Game/EnemyA.png', { frameWidth: 50, frameHeight: 65 });
+            this.load.spritesheet('enemyW', 'assets/Game/EnemyW.png', { frameWidth: 50, frameHeight: 65 });
+            this.load.spritesheet('enemyDR', 'assets/Game/EnemyDR.png', { frameWidth: 50, frameHeight: 65 });
+            this.load.spritesheet('enemyDB', 'assets/Game/EnemyDB.png', { frameWidth: 50, frameHeight: 65 });
+            this.load.spritesheet('enemyDG', 'assets/Game/EnemyDG.png', { frameWidth: 50, frameHeight: 65 });
+            this.load.spritesheet('enemyFP', 'assets/Game/EnemyFP.png', { frameWidth: 50, frameHeight: 65 });
+            this.load.spritesheet('enemyFB', 'assets/Game/EnemyFB.png', { frameWidth: 50, frameHeight: 65 });
+            this.load.spritesheet('enemyFY', 'assets/Game/EnemyFY.png', { frameWidth: 50, frameHeight: 65 });
+            //爆発
+            this.load.spritesheet('explosion', 'assets/Game/Explosion.png', { frameWidth: 50, frameHeight: 50 });
+            //弾
+            this.load.image('Bullet', 'assets/Game/Bullet.png');
+            this.load.image('enemyBullet', 'assets/Game/eBullet.png');
+            this.load.image('enemyBullet2', 'assets/Game/eBullet2.png');
+            //シールド
+            this.load.image('shield', 'assets/Game/shield.png');
+            //削除用
+            this.load.image('offscreen', 'assets/Game/offscreen.png');
+            //半透明画像
+            this.load.image('translucent', 'assets/Game/translucent.png');
+
+        }
+        //実行開始時の初期化
+        create() {
+            //背景初期化
+            backGround = this.physics.add.group();
+            backGround1 = backGround.create(200, 325, 'gameBack');
+            backGround2 = backGround.create(200, -325, 'gameBack');
+            backGround1.setVelocityY(100);
+            backGround2.setVelocityY(100);
+            //上下画面外の削除用
+            OffScreenUP = this.physics.add.image(200, -50, 'offscreen');
+            OffScreenDOWN = this.physics.add.image(200, 1350, 'offscreen');
+            //プレイヤー初期化
+            switch (playerState1) {
+                case 'selectR':
+                    player = this.physics.add.sprite(200, 450, 'playerR');
+                    player.setCollideWorldBounds(true);
+                    break;
+                case 'selectB':
+                    player = this.physics.add.sprite(200, 450, 'playerB');
+                    player.setCollideWorldBounds(true);
+                    break;
+                case 'selectY':
+                    player = this.physics.add.sprite(200, 450, 'playerY');
+                    player.setCollideWorldBounds(true);
+                    break;
+            }
+            //ボス
+            boss = this.physics.add.sprite(200, -100, 'boss');
+            //敵
+            enemyA = this.physics.add.group();
+            enemyW = this.physics.add.group();
+            enemyDR = this.physics.add.group();
+            enemyDG = this.physics.add.group();
+            enemyDB = this.physics.add.group();
+            enemyFP = this.physics.add.group();
+            enemyFB = this.physics.add.group();
+            enemyFY = this.physics.add.group();
+            //爆発
+            explosion = this.physics.add.group();
+            //シールド
+            shield = this.physics.add.image(200, 400, 'shield');
+            shield.setCollideWorldBounds(true);
+            shield.setVisible(false);
+            //キー入力
+            Keys = this.input.keyboard.addKeys({
+                W: Phaser.Input.Keyboard.KeyCodes.W,
+                A: Phaser.Input.Keyboard.KeyCodes.A,
+                S: Phaser.Input.Keyboard.KeyCodes.S,
+                D: Phaser.Input.Keyboard.KeyCodes.D,
+                ENTER: Phaser.Input.Keyboard.KeyCodes.ENTER,
+                SPACE: Phaser.Input.Keyboard.KeyCodes.SPACE,
+                SHIFT: Phaser.Input.Keyboard.KeyCodes.SHIFT,
+                TAB: Phaser.Input.Keyboard.KeyCodes.TAB,
+                ONE: Phaser.Input.Keyboard.KeyCodes.ONE,
+                TWO: Phaser.Input.Keyboard.KeyCodes.TWO,
+                THREE: Phaser.Input.Keyboard.KeyCodes.THREE,
+                RIGHT: Phaser.Input.Keyboard.KeyCodes.RIGHT,
+                LEFT: Phaser.Input.Keyboard.KeyCodes.LEFT,
+                UP: Phaser.Input.Keyboard.KeyCodes.UP,
+                DOWN: Phaser.Input.Keyboard.KeyCodes.DOWN,
+            });
+
+            //プレイヤーアニメーション
+            SetAnimation(this, 'playerR', 0, 3);
+            SetAnimation(this, 'playerB', 0, 3);
+            SetAnimation(this, 'playerY', 0, 3);
+            SetAnimation(this, 'playerRB', 0, 3);
+            SetAnimation(this, 'playerRY', 0, 3);
+            SetAnimation(this, 'playerBR', 0, 3);
+            SetAnimation(this, 'playerBY', 0, 3);
+            SetAnimation(this, 'playerYR', 0, 3);
+            SetAnimation(this, 'playerYB', 0, 3);
+            SetAnimation(this, 'playerRBY', 0, 3);
+            SetAnimation(this, 'playerBRY', 0, 3);
+            SetAnimation(this, 'playerYRB', 0, 3);
+            //敵アニメーション
+            SetAnimation(this, 'enemyA', 0, 3);
+            SetAnimation(this, 'enemyW', 0, 3);
+            SetAnimation(this, 'enemyDR', 0, 3);
+            SetAnimation(this, 'enemyDG', 0, 3);
+            SetAnimation(this, 'enemyDB', 0, 3);
+            SetAnimation(this, 'enemyFP', 0, 3);
+            SetAnimation(this, 'enemyFB', 0, 3);
+            SetAnimation(this, 'enemyFY', 0, 3);
+            //ボスアニメーション
+            SetAnimation(this, 'boss', 0, 2);
+            //爆発
+            this.anims.create({
+                key: 'explosion',
+                frames: this.anims.generateFrameNumbers('explosion', { start: 0, end: 7 }),
+                frameRate: 10
+            });
+            //プレイヤーの弾
+            bullet = this.physics.add.group();
+            //敵の弾
+            enemyBullet_N = this.physics.add.group();
+            enemyBullet_S = this.physics.add.group();
+            //当たり判定
+            this.physics.add.overlap(bullet, OffScreenUP, destroyBullet, null, this);
+            this.physics.add.overlap(OffScreenDOWN, backGround, SetBackGround, null, this);
+            //プレイヤー撃破
+            this.physics.add.overlap(player, enemyW, hitPlayer, null, this);
+            this.physics.add.overlap(player, enemyA, hitPlayer, null, this);
+            this.physics.add.overlap(player, enemyDR, hitPlayer, null, this);
+            this.physics.add.overlap(player, enemyDG, hitPlayer, null, this);
+            this.physics.add.overlap(player, enemyDB, hitPlayer, null, this);
+            this.physics.add.overlap(player, enemyFP, hitPlayer, null, this);
+            this.physics.add.overlap(player, enemyFB, hitPlayer, null, this);
+            this.physics.add.overlap(player, enemyFY, hitPlayer, null, this);
+            this.physics.add.overlap(player, enemyBullet_N, BulletPlayer, null, this);
+            this.physics.add.overlap(player, enemyBullet_S, BulletPlayer, null, this);
+            this.physics.add.overlap(player, boss, hitPlayer, null, this);
+            //敵撃破
+            this.physics.add.overlap(enemyW, bullet, hitBulletW, null, this);
+            this.physics.add.overlap(enemyA, bullet, hitBulletA, null, this);
+            this.physics.add.overlap(enemyDR, bullet, hitBulletDR, null, this);
+            this.physics.add.overlap(enemyDG, bullet, hitBulletDG, null, this);
+            this.physics.add.overlap(enemyDB, bullet, hitBulletDB, null, this);
+            this.physics.add.overlap(enemyFP, bullet, hitBulletFP, null, this);
+            this.physics.add.overlap(enemyFB, bullet, hitBulletFB, null, this);
+            this.physics.add.overlap(enemyFY, bullet, hitBulletFY, null, this);
+            //敵の処理
+            this.physics.add.overlap(OffScreenDOWN, enemyW, destroyEnemy, null, this);
+            this.physics.add.overlap(OffScreenDOWN, enemyA, destroyEnemy, null, this);
+            this.physics.add.overlap(OffScreenDOWN, enemyDR, destroyEnemy, null, this);
+            this.physics.add.overlap(OffScreenDOWN, enemyDG, destroyEnemy, null, this);
+            this.physics.add.overlap(OffScreenDOWN, enemyDB, destroyEnemy, null, this);
+            this.physics.add.overlap(OffScreenDOWN, enemyFP, destroyEnemy, null, this);
+            this.physics.add.overlap(OffScreenDOWN, enemyFB, destroyEnemy, null, this);
+            this.physics.add.overlap(OffScreenDOWN, enemyFY, destroyEnemy, null, this);
+            //ボスヒット
+            this.physics.add.overlap(boss, bullet, hitBoss, null, this);
+            //爆発処理
+            this.physics.add.overlap(OffScreenDOWN, explosion, destroyExplosion, null, this);
+            //シールド処理
+            this.physics.add.overlap(shield, enemyW, DefenceShield, null, this);
+            this.physics.add.overlap(shield, enemyA, DefenceShield, null, this);
+            this.physics.add.overlap(shield, enemyDR, DefenceShield, null, this);
+            this.physics.add.overlap(shield, enemyDG, DefenceShield, null, this);
+            this.physics.add.overlap(shield, enemyDB, DefenceShield, null, this);
+            this.physics.add.overlap(shield, enemyFP, DefenceShield, null, this);
+            this.physics.add.overlap(shield, enemyFB, DefenceShield, null, this);
+            this.physics.add.overlap(shield, enemyFY, DefenceShield, null, this);
+            this.physics.add.overlap(shield, enemyBullet_N, DefenceShield, null, this);
+            this.physics.add.overlap(shield, enemyBullet_S, DefenceShield, null, this);
+            //テキスト
+            scoreText = this.add.text(10, 10, 'score:' + score, { fontSize: '20px' });
+            specialText = this.add.text(200, 600, '');
+            specialText.setFontSize(20);
+            specialText.setFontFamily("MPLUS1");
+            //音声データ
+            this.sound.add('specialStart');
+            this.sound.add('specialEnd');
+            this.sound.add('bullet');
+            this.sound.add('bullet2');
+            this.bullet03=this.sound.add(
+                'bullet3',{volume:0.5},
+                );
+            this.sound.add('explosionP');
+            this.sound.add('explosionP');
+            this.se01 = this.sound.add(
+                'explosionB', {loop:false,volume: 0.5},
+            );
+            this.sound.add('explosionBD');
+            this.sound.add('shield');
+
+            this.music = this.sound.add(
+                'bgm01', { loop: true, volume: 0.25 },
+            );
+            this.music01 = this.sound.add(
+                'bgm02', { loop: true, volume: 0.25 },
+            );
+            this.music.play();
+
+            
+        }
+        //更新処理
+        update() {
+            if (!gameOver && !gameClear) {
+                scoreText.setText('score:' + score);
+                //プレイヤーアニメーション
+                PlayerAnimation();
+                //プレイヤー操作
+                PlayerOperation();
+                //パワーアップ
+                PowerUPFunction();
+
+                //Boss移動
+                if (bossHP > 0) {
+                    BossMove(this);
+                }
+                else if (bossHP < 0) {
+                    bossHP = 0;
+                    boss.setVelocityX(0);
+                    boss.setVelocityY(0);
+                    for (var i = 0; i < 10; i++) {
+                        var e_x = Phaser.Math.Between(-100, 100);
+                        var e_y = Phaser.Math.Between(-100, 100);
+                        var explo = explosion.create(boss.x + e_x, boss.y + e_y, 'explosion');
+                        explo.anims.play('explosion');
+                        this.sound.play('explosionBD');
+                    }
+                    boss.destroy();
+                    gameClear = true;
+                    this.physics.pause();
+                    var pauseImage = this.add.image(200, 325, 'translucent');
+                    var text = this.add.text(100, 400, '次へ:Enter');
+                    text.setTint(0x000000);
+                    text.setFontFamily("MPLUS1");
+                    text.setFontSize(40);
+                    scoreText.setText('');
+                    specialText.setText('');
+                    this.music.stop();
+                    this.music01.stop();
+                }
+                else if (wavecount >= 20 && bossHP == 0 && !gameClear) {
+                    wavecount = 0;
+                    this.music01.play();
+                    this.music.stop();
+                    boss.setVelocityY(100);
+                    bossHP = 300;
+                    backGround1.setVelocityY(0);
+                    backGround2.setVelocityY(0);
+                }
+                // 敵の出現・移動
+                if (bossHP == 0 && !gameClear) {
+                    EnemyWave();
+                }
+                EnemyMove(this);
+
+                //攻撃
+                if (Phaser.Input.Keyboard.JustDown(Keys.SPACE)) {
+                    this.sound.play('bullet');
+                    CreateBullet();
+                }
+                else if (Keys.SPACE.isDown) {
+                    if (BulletWaitTime()) {
+                        this.sound.play('bullet');
+                        CreateBullet();
+                        bulletCount = 0;
+                    }
+                }
+                else {
+                    bulletCount = 0;
+                }
+                if (Phaser.Input.Keyboard.JustDown(Keys.SHIFT)) {
+                    if (!playerSpecial && playerSpecialCount == 0) {
+                        playerSpecial = true;
+                        this.sound.play('specialStart');
+                    }
+                }
+                if (playerSpecialCount == 1000) {
+                    this.sound.play('specialEnd');
+                }
+                //プレイヤー特殊能力
+                PlayerSpecial();
+                //デバック用
+                DebugFunction();
+            }
+            else {
+                if (Phaser.Input.Keyboard.JustDown(Keys.ENTER)) {
+                    this.scene.start("ResultScene");
+                    wave = 0;
+                    playerSpecial = false;
+                }
+            }
+        }
+    }
+
+
+    //デバック用関数
+    function DebugFunction() {
+        if (Phaser.Input.Keyboard.JustDown(Keys.ONE)) {
+            playerNum = 0;
+            playerState1 = 'selectR';
+            playerState2 = 'selectRB';
+            playerState3 = 'selectRBY';
+            wavecount = 30;
+        }
+        if (Phaser.Input.Keyboard.JustDown(Keys.TWO)) {
+            playerNum = 0;
+            playerState1 = 'selectB';
+            playerState2 = 'selectBR';
+            playerState3 = 'selectBRY';
+        }
+        if (Phaser.Input.Keyboard.JustDown(Keys.THREE)) {
+            playerNum = 0;
+            playerState1 = 'selectY';
+            playerState2 = 'selectYR';
+            playerState3 = 'selectYRB';
+        }
+        if (Phaser.Input.Keyboard.JustDown(Keys.RIGHT) || Phaser.Input.Keyboard.JustDown(Keys.LEFT)) {
+            switch (playerState2) {
+                case 'selectRB':
+                    playerState2 = 'selectRY';
+                    break;
+                case 'selectRY':
+                    playerState2 = 'selectRB';
+                    break;
+                case 'selectBR':
+                    playerState2 = 'selectBY';
+                    break;
+                case 'selectBY':
+                    playerState2 = 'selectBR';
+                    break;
+                case 'selectYR':
+                    playerState2 = 'selectYB';
+                    break;
+                case 'selectYB':
+                    playerState2 = 'selectYR';
+                    break;
+            }
+        }
+    }
+
+    //パワーアップ処理
+    function PowerUPFunction() {
+        if (score > 485 && score < 515) {
+            playerNum = 1;
+            score = 520;
+        }
+        else if (score > 985 && score < 1015) {
+            playerNum = 2;
+            score = 1030;
+        }
+    }
+
+    //アニメーションセット
+    function SetAnimation(game, str, sNum, eNum) {
+        game.anims.create({
+            key: str,
+            frames: game.anims.generateFrameNumbers(str, { start: sNum, end: eNum }),
+            frameRate: 10,
+            repeat: -1
+        });
+    }
+
+    //プレイヤーのアニメーション処理
+    function PlayerAnimation() {
+        if (!gameOver) {
+            switch (playerState2) {
+                case 'selectRB':
+                case 'selectRY':
+                    if (playerNum == 0) {
+                        player.anims.play('playerR', true);
+                    }
+                    else if (playerNum == 1) {
+                        if (playerState2 == 'selectRB') {
+                            player.anims.play('playerRB', true);
+                        }
+                        else {
+                            player.anims.play('playerRY', true);
+                        }
+                    }
+                    else if (playerNum == 2) {
+                        player.anims.play('playerRBY', true);
+                    }
+                    break;
+                case 'selectBR':
+                case 'selectBY':
+                    if (playerNum === 0) {
+                        player.anims.play('playerB', true);
+                    }
+                    else if (playerNum == 1) {
+                        if (playerState2 == 'selectBR') {
+                            player.anims.play('playerBR', true);
+                        }
+                        else {
+                            player.anims.play('playerBY', true);
+                        }
+                    }
+                    else if (playerNum == 2) {
+                        player.anims.play('playerBRY', true);
+                    }
+                    break;
+                case 'selectYR':
+                case 'selectYB':
+                    if (playerNum == 0) {
+                        player.anims.play('playerY', true);
+                    }
+                    else if (playerNum == 1) {
+                        if (playerState2 == 'selectYR') {
+                            player.anims.play('playerYR', true);
+                        }
+                        else {
+                            player.anims.play('playerYB', true);
+                        }
+                    }
+                    else if (playerNum == 2) {
+                        player.anims.play('playerYRB', true);
+                    }
+                    break;
+            }
+        }
+    }
+
+    //プレイヤーの操作
+    function PlayerOperation() {
+        if (!playerSpecial) {
+            //第一形態
+            if (playerNum == 0) {
+                switch (playerState1) {
+                    case 'selectR':
+                        playerSpeed = 150;
+                        break;
+                    case 'selectB':
+                        playerSpeed = 200;
+                        break;
+                    case 'selectY':
+                        playerSpeed = 120;
+                        break;
+                }
+            }
+            //第二形態
+            else if (playerNum == 1) {
+                switch (playerState2) {
+                    case 'selectRB':
+                        playerSpeed = 200;
+                        break;
+                    case 'selectRY':
+                        playerSpeed = 120;
+                        break;
+                    case 'selectBR':
+                        playerSpeed = 350;
+                        break;
+                    case 'selectBY':
+                        playerSpeed = 200;
+                        break;
+                    case 'selectYR':
+                        playerSpeed = 120;
+                        break;
+                    case 'selectYB':
+                        playerSpeed = 150;
+                        break;
+                }
+            }
+            //第三形態
+            else if (playerNum == 2) {
+                switch (playerState3) {
+                    case 'selectRBY':
+                        playerSpeed = 300;
+                        break;
+                    case 'selectBRY':
+                        playerSpeed = 450;
+                        break;
+                    case 'selectYRB':
+                        playerSpeed = 200;
+                        break;
+                }
+            }
+        }
+        //上下移動
+        if (Keys.W.isDown) {
+            player.setVelocityY(-playerSpeed);
+            shield.y = player.y - 50;
+        }
+        else if (Keys.S.isDown) {
+            player.setVelocityY(playerSpeed);
+            shield.y = player.y - 50;
+        }
+        else {
+            player.setVelocityY(0);
+        }
+        //左右移動
+        if (Keys.D.isDown && Keys.A.isDown || !Keys.D.isDown && !Keys.A.isDown) {
+            player.setVelocityX(0);
+        }
+        else if (Keys.A.isDown) {
+            player.setVelocityX(-playerSpeed);
+            shield.x = player.x;
+        }
+        else if (Keys.D.isDown) {
+            player.setVelocityX(playerSpeed);
+            shield.x = player.x;
+        }
+    }
+
+    //プレイヤーの特殊能力
+    function PlayerSpecial() {
+        if (playerSpecialCount == 0) {
+            specialText.setText('能力使用可能です');
+        }
+        else {
+            var time=(1000-playerSpecialCount)/30;
+            specialText.setText('効果時間：'+time.toFixed());
+        }
+        if (playerSpecial) {
+            if (playerSpecialCount < 1000) {
+                playerSpecialCount++;
+                switch (playerState1) {
+                    case 'selectR':
+                        playerSpeed = 400;
+                        player.setTint(0xff0000);
+                        break;
+                    case 'selectB':
+                        bulletWait = 25;
+                        player.setTint(0x00ffff);
+                        break;
+                    case 'selectY':
+                        playerSpeed = 200;
+                        shieldFlag = true;
+                        shield.setVisible(true);
+                        player.setTint(0xbf9000);
+                        break;
+                }
+            }
+            else if (playerSpecialCount >= 1000) {
+                playerSpecial = false;
+                bulletWait = 50;
+                shieldFlag = false;
+                shieldHP = 5;
+                shield.setVisible(false);
+                player.setTint(0xffffff);
+                playerSpecialCount = 3000;
+            }
+        }
+        if (!playerSpecial) {
+            if (playerSpecialCount != 0) {
+                var count = playerSpecialCount / 60;
+                specialText.setText('クールタイム：' + count.toFixed());
+            }
+            if (playerSpecialCount > 0) {
+                playerSpecialCount--;
+            }
+            else if (playerSpecialCount < 0) {
+                playerSpecialCount = 0;
+            }
+        }
+    }
+
+    //光弾の生成関数
+    function CreateBullet() {
+        var bullets;
+        //第一形態時
+        if (playerNum == 0) {
+            switch (playerState1) {
+                case 'selectR':
+                    bullets = bullet.create(player.x, player.y - 37, 'Bullet');
+                    bullets.setVelocityY(-400);
+                    bullets.setTint(0xff0000);
+                    break;
+                case 'selectB':
+                    bullets = bullet.create(player.x, player.y - 20, 'Bullet');
+                    bullets.setVelocityY(-300);
+                    bullets.setTint(0x0000ff);
+                    bullets = bullet.create(player.x, player.y - 30, 'Bullet');
+                    bullets.setVelocityY(-300);
+                    bullets.setTint(0x0000ff);
+                    bullets = bullet.create(player.x, player.y - 40, 'Bullet');
+                    bullets.setVelocityY(-300);
+                    bullets.setTint(0x0000ff);
+                    break;
+                case 'selectY':
+                    bullets = bullet.create(player.x + 10, player.y - 20, 'Bullet');
+                    bullets.setVelocityY(-300);
+                    bullets.setTint(0x00ff00);
+                    bullets = bullet.create(player.x - 10, player.y - 20, 'Bullet');
+                    bullets.setVelocityY(-300);
+                    bullets.setTint(0x00ff00);
+                    break;
+            }
+        }
+        //第二形態
+        else if (playerNum == 1) {
+            switch (playerState2) {
+                case 'selectRB':
+                    bullets = bullet.create(player.x, player.y - 37, 'Bullet');
+                    bullets.setVelocityY(-450);
+                    bullets.setTint(0x0000ff);
+                    bullets = bullet.create(player.x, player.y - 47, 'Bullet');
+                    bullets.setVelocityY(-450);
+                    bullets.setTint(0x0000ff);
+                    bullets = bullet.create(player.x, player.y - 57, 'Bullet');
+                    bullets.setVelocityY(-450);
+                    bullets.setTint(0x0000ff);
+                    break;
+                case 'selectRY':
+                    bullets = bullet.create(player.x + 10, player.y - 20, 'Bullet');
+                    bullets.setVelocityY(-300);
+                    bullets.setTint(0x00ff00);
+                    bullets = bullet.create(player.x - 10, player.y - 20, 'Bullet');
+                    bullets.setVelocityY(-300);
+                    bullets.setTint(0x00ff00);
+                    break;
+                case 'selectBR':
+                    bullets = bullet.create(player.x, player.y - 20, 'Bullet');
+                    bullets.setVelocityX(10);
+                    bullets.setVelocityY(-300);
+                    bullets.setTint(0xff0000);
+                    bullets = bullet.create(player.x, player.y - 30, 'Bullet');
+                    bullets.setVelocityX(10);
+                    bullets.setVelocityY(-300);
+                    bullets.setTint(0x0000ff);
+                    bullets = bullet.create(player.x, player.y - 40, 'Bullet');
+                    bullets.setVelocityX(10);
+                    bullets.setVelocityY(-300);
+                    bullets.setTint(0xff0000);
+                    bullets = bullet.create(player.x, player.y - 20, 'Bullet');
+                    bullets.setVelocityY(-10);
+                    bullets.setVelocityY(-300);
+                    bullets.setTint(0xff0000);
+                    bullets = bullet.create(player.x, player.y - 30, 'Bullet');
+                    bullets.setVelocityY(-10);
+                    bullets.setVelocityY(-300);
+                    bullets.setTint(0x0000ff);
+                    bullets = bullet.create(player.x, player.y - 40, 'Bullet');
+                    bullets.setVelocityY(-10);
+                    bullets.setVelocityY(-300);
+                    bullets.setTint(0xff0000);
+                    break;
+                case 'selectBY':
+                    bullets = bullet.create(player.x, player.y - 20, 'Bullet');
+                    bullets.setVelocityY(-300);
+                    bullets.setTint(0x0000ff);
+                    bullets = bullet.create(player.x, player.y - 30, 'Bullet');
+                    bullets.setVelocityY(-300);
+                    bullets.setTint(0x0000ff);
+                    bullets = bullet.create(player.x, player.y - 40, 'Bullet');
+                    bullets.setVelocityY(-300);
+                    bullets.setTint(0x0000ff);
+                    bullets = bullet.create(player.x + 15, player.y - 20, 'Bullet');
+                    bullets.setVelocityX(5);
+                    bullets.setVelocityY(-300);
+                    bullets.setTint(0x00ff00);
+                    bullets = bullet.create(player.x - 15, player.y - 20, 'Bullet');
+                    bullets.setVelocityX(-5);
+                    bullets.setVelocityY(-300);
+                    bullets.setTint(0x00ff00);
+                    break;
+                case 'selectYR':
+                    bullets = bullet.create(player.x, player.y - 37, 'Bullet');
+                    bullets.setVelocityY(-400);
+                    bullets.setTint(0xff0000);
+                    bullets = bullet.create(player.x + 10, player.y - 20, 'Bullet');
+                    bullets.setVelocityY(-300);
+                    bullets.setTint(0x00ff00);
+                    bullets = bullet.create(player.x - 10, player.y - 20, 'Bullet');
+                    bullets.setVelocityY(-300);
+                    bullets.setTint(0x00ff00);
+                    break;
+                case 'selectYB':
+                    bullets = bullet.create(player.x, player.y - 30, 'Bullet');
+                    bullets.setVelocityY(-260);
+                    bullets.setTint(0x0000ff);
+                    bullets = bullet.create(player.x, player.y - 40, 'Bullet');
+                    bullets.setVelocityY(-260);
+                    bullets.setTint(0x0000ff);
+                    bullets = bullet.create(player.x, player.y - 50, 'Bullet');
+                    bullets.setVelocityY(-260);
+                    bullets.setTint(0x0000ff);
+                    bullets = bullet.create(player.x + 10, player.y - 30, 'Bullet');
+                    bullets.setVelocityY(-240);
+                    bullets.setTint(0x00ff00);
+                    bullets = bullet.create(player.x - 10, player.y - 30, 'Bullet');
+                    bullets.setVelocityY(-240);
+                    bullets.setTint(0x00ff00);
+                    break;
+            }
+        }
+        //第三形態
+        else if (playerNum == 2) {
+            switch (playerState3) {
+                case 'selectRBY':
+                    bullets = bullet.create(player.x, player.y - 37, 'Bullet');
+                    bullets.setVelocityY(-400);
+                    bullets.setTint(0x0000ff);
+                    bullets = bullet.create(player.x, player.y - 37, 'Bullet');
+                    bullets.setVelocityX(-10);
+                    bullets.setVelocityY(-350);
+                    bullets.setTint(0xff0000);
+                    bullets = bullet.create(player.x, player.y - 37, 'Bullet');
+                    bullets.setVelocityX(10);
+                    bullets.setVelocityY(-350);
+                    bullets.setTint(0xff0000);
+                    bullets = bullet.create(player.x + 20, player.y - 20, 'Bullet');
+                    bullets.setVelocityX(20);
+                    bullets.setVelocityY(-300);
+                    bullets.setTint(0x00ff00);
+                    bullets = bullet.create(player.x - 20, player.y - 20, 'Bullet');
+                    bullets.setVelocityX(-20);
+                    bullets.setVelocityY(-300);
+                    bullets.setTint(0x00ff00);
+                    break;
+                case 'selectBRY':
+                    bullets = bullet.create(player.x, player.y - 20, 'Bullet');
+                    bullets.setVelocityY(-450);
+                    bullets.setTint(0x0000ff);
+                    bullets = bullet.create(player.x, player.y - 30, 'Bullet');
+                    bullets.setVelocityY(-450);
+                    bullets.setTint(0x0000ff);
+                    bullets = bullet.create(player.x, player.y - 40, 'Bullet');
+                    bullets.setVelocityY(-450);
+                    bullets.setTint(0x0000ff);
+                    bullets = bullet.create(player.x + 15, player.y - 20, 'Bullet');
+                    bullets.setVelocityX(20);
+                    bullets.setVelocityY(-300);
+                    bullets.setTint(0xff0000);
+                    bullets = bullet.create(player.x - 15, player.y - 20, 'Bullet');
+                    bullets.setVelocityX(-20);
+                    bullets.setVelocityY(-300);
+                    bullets.setTint(0xff0000);
+                    bullets = bullet.create(player.x + 15, player.y - 20, 'Bullet');
+                    bullets.setVelocityY(-300);
+                    bullets.setTint(0x00ff00);
+                    bullets = bullet.create(player.x - 15, player.y - 20, 'Bullet');
+                    bullets.setVelocityY(-300);
+                    bullets.setTint(0x00ff00);
+                    break;
+                case 'selectYRB':
+                    bullets = bullet.create(player.x, player.y - 37, 'Bullet');
+                    bullets.setVelocityY(-450);
+                    bullets.setTint(0xff0000);
+                    bullets = bullet.create(player.x + 10, player.y - 37, 'Bullet');
+                    bullets.setVelocityY(-350);
+                    bullets.setTint(0x00ffff);
+                    bullets = bullet.create(player.x - 10, player.y - 37, 'Bullet');
+                    bullets.setVelocityY(-350);
+                    bullets.setTint(0x00ffff);
+                    bullets = bullet.create(player.x + 10, player.y - 47, 'Bullet');
+                    bullets.setVelocityY(-350);
+                    bullets.setTint(0x00ffff);
+                    bullets = bullet.create(player.x - 10, player.y - 47, 'Bullet');
+                    bullets.setVelocityY(-350);
+                    bullets.setTint(0x00ffff);
+                    bullets = bullet.create(player.x + 10, player.y - 37, 'Bullet');
+                    bullets.setVelocityX(10);
+                    bullets.setVelocityY(-300);
+                    bullets.setTint(0x00ff00);
+                    bullets = bullet.create(player.x - 10, player.y - 37, 'Bullet');
+                    bullets.setVelocityX(-10);
+                    bullets.setVelocityY(-300);
+                    bullets.setTint(0x00ff00);
+                    break;
+            }
+        }
+    }
+
+    //光弾の待ち時間
+    function BulletWaitTime() {
+        bulletCount++;
+        switch (playerState1) {
+            case 'selectR':
+                if (bulletCount > 40) {
+                    return true;
+                }
+                break;
+            case 'selectB':
+                if (bulletCount > bulletWait) {
+                    return true;
+                }
+                break;
+            case 'selectY':
+                if (bulletCount > 30) {
+                    return true;
+                }
+                break;
+        }
+        return false;
+    }
+
+    //敵の生成
+    function CreateEnemy(type, x, y) {
+        var Enemy;
+        switch (type) {
+            case 'A':
+                Enemy = enemyA.create(x, y, 'enemyA');
+                Enemy.setVelocityY(120);
+                break;
+            case 'As':
+                for (var i = 0; i < 4; i++) {
+                    Enemy = enemyA.create(x, y + (-70 * i), 'enemyA');
+                    Enemy.setVelocityY(120);
+                }
+                break;
+            case 'W':
+                Enemy = enemyW.create(x, y, 'enemyW');
+                Enemy.setVelocityY(100);
+                break;
+            case 'Wrs':
+                for (var i = 0; i < 4; i++) {
+                    Enemy = enemyW.create(x + (50 * i), y + (-70 * i), 'enemyW');
+                    Enemy.setVelocityY(100);
+                }
+                break;
+            case 'Wls':
+                for (var i = 0; i < 4; i++) {
+                    Enemy = enemyW.create(x - (50 * i), y + (-70 * i), 'enemyW');
+                    Enemy.setVelocityY(100);
+                }
+                break;
+            case 'DR':
+                Enemy = enemyDR.create(x, y, 'enemyDR');
+                Enemy.setVelocityY(130);
+                break;
+            case 'DG':
+                Enemy = enemyDG.create(x, y, 'enemyDG');
+                Enemy.setVelocityY(130);
+                break;
+            case 'DB':
+                Enemy = enemyDB.create(x, y, 'enemyDB');
+                Enemy.setVelocityY(130);
+                break;
+            case 'FP':
+                Enemy = enemyFP.create(x, y, 'enemyFP');
+                Enemy.setVelocityY(130);
+                break;
+            case 'FB':
+                Enemy = enemyFB.create(x, y, 'enemyFB');
+                Enemy.setVelocityY(130);
+                break;
+            case 'FY':
+                Enemy = enemyFY.create(x, y, 'enemyFY');
+                Enemy.setVelocityY(130);
+                break;
+        }
+    }
+
+    //敵ウェーブ処理
+    function EnemyWave() {
+        enemyCreateCount++;
+        if (enemyCreateCount >= nextWave && wavecount < 20) {
+            switch (wave) {
+                //右エイリアン→左エイリアン
+                case 0:
+                    CreateEnemy('As', 300, -50);
+                    CreateEnemy('As', 100, -400);
+                    nextWave = 1000;
+                    if (wavecount > 10) {
+                        wave = Phaser.Math.Between(2, 4);
+                    }
+                    else {
+                        wave = 1;
+                    }
+                    break;
+                //左わかめ→右わかめ
+                case 1:
+                    CreateEnemy('Wrs', 50, -50);
+                    CreateEnemy('Wls', 350, -400);
+                    nextWave = 1500;
+                    if (wavecount > 10) {
+                        wave = Phaser.Math.Between(2, 7);
+                    }
+                    else {
+                        wave = Phaser.Math.Between(2, 4);
+                    }
+                    wave = Phaser.Math.Between(2, 4);
+                    break;
+                //赤ドラゴンズ
+                case 2:
+                    CreateEnemy('DR', 50, -100);
+                    CreateEnemy('DR', 100, -50);
+                    CreateEnemy('DR', 150, -100);
+                    CreateEnemy('DR', 150, -400);
+                    CreateEnemy('DR', 200, -350);
+                    CreateEnemy('DR', 250, -400);
+                    nextWave = 1000;
+                    if (wavecount < 5) {
+                        wave = Phaser.Math.Between(0, 2);
+                    }
+                    else if (wavecount < 10) {
+                        wave = Phaser.Math.Between(1, 4);
+                    }
+                    else if (wavecount >= 10) {
+                        wave = Phaser.Math.Between(2, 7);
+                    }
+                    break;
+                //緑ドラゴンズ
+                case 3:
+                    CreateEnemy('DG', 200, -50);
+                    CreateEnemy('DG', 250, -100);
+                    CreateEnemy('DG', 300, -50);
+                    CreateEnemy('DG', 50, -400);
+                    CreateEnemy('DG', 100, -350);
+                    CreateEnemy('DG', 150, -400);
+                    nextWave = 1000;
+                    if (wavecount < 5) {
+                        wave = Phaser.Math.Between(0, 2);
+                    }
+                    else if (wavecount < 10) {
+                        wave = Phaser.Math.Between(3, 6);
+                    }
+                    else if (wavecount >= 10) {
+                        wave = Phaser.Math.Between(5, 7);
+                    }
+                    break;
+                //青ドラゴンズ
+                case 4:
+                    CreateEnemy('DB', 100, -50);
+                    CreateEnemy('DB', 100, -150);
+                    CreateEnemy('DB', 100, -250);
+                    nextWave = 1000;
+                    if (wavecount < 5) {
+                        wave = Phaser.Math.Between(0, 2);
+                    }
+                    else if (wavecount < 10) {
+                        wave = Phaser.Math.Between(1, 4);
+                    }
+                    else if (wavecount >= 10) {
+                        wave = Phaser.Math.Between(5, 7);
+                    }
+                    break;
+                //紫戦闘機
+                case 5:
+                    CreateEnemy('FP', 100, -130);
+                    CreateEnemy('FP', 200, -50);
+                    CreateEnemy('FP', 300, -130);
+                    nextWave = 500;
+                    if (wavecount < 5) {
+                        wave = Phaser.Math.Between(0, 4);
+                    }
+                    else {
+                        wave = Phaser.Math.Between(6, 7);
+                    }
+                    break;
+                //青戦闘機
+                case 6:
+                    CreateEnemy('FB', 100, -200);
+                    CreateEnemy('FB', 200, -50);
+                    CreateEnemy('FB', 300, -150);
+                    nextWave = 500;
+                    wave = Phaser.Math.Between(0, 4);
+                    break;
+                //黄戦闘機
+                case 7:
+                    CreateEnemy('FY', 100, -200);
+                    CreateEnemy('FY', 200, -50);
+                    CreateEnemy('FY', 300, -200);
+                    nextWave = 500;
+                    if (wavecount < 5) {
+                        wave = Phaser.Math.Between(0, 4);
+                    }
+                    else {
+                        wave = Phaser.Math.Between(3, 6);
+                    }
+                    break;
+            }
+            wavecount++;
+            enemyCreateCount = 0;
+        }
+    }
+
+    //敵の移動
+    function EnemyMove(game) {
+        enemyCountA++;
+        enemyCountW++;
+        enemyCountA++;
+        enemyCountW++;
+        enemyCountDR++;
+        enemyCountDG++;
+        enemyCountDB++;
+        enemyCountFP++;
+        enemyCountFB++;
+        enemyCountFY++;
+        enemyCountFP1++;
+        enemyCountFB1++;
+        enemyCountFY1++;
+        enemyCountFP2++;
+        enemyCountFB2++;
+        enemyCountFY2++;
+        var bullets;
+        //エイリアンの処理
+        enemyA.children.iterate(function (child) {
+            child.anims.play('enemyA', true);
+        });
+        //わかめくんの処理
+        enemyW.children.iterate(function (child) {
+            child.anims.play('enemyW', true);
+        });
+        //レッドドラゴン処理
+        enemyDR.children.iterate(function (child) {
+            child.anims.play('enemyDR', true);
+            if (enemyCountDR < 200) {
+                child.setVelocityX(100);
+            }
+            else if (enemyCountDR > 200 && enemyCountDR <= 400) {
+                child.setVelocityX(-100);
+            }
+            else if (enemyCountDR > 400) {
+                enemyCountDR = 0;
+            }
+        });
+        //グリーンドラゴン処理
+        enemyDG.children.iterate(function (child) {
+            child.anims.play('enemyDG', true);
+            if (enemyCountDG < 150) {
+                child.setVelocityX(100);
+            }
+            else if (enemyCountDG > 150 && enemyCountDG <= 300) {
+                child.setVelocityX(0);
+            }
+            else if (enemyCountDG > 300 && enemyCountDG <= 450) {
+                child.setVelocityX(-100);
+            }
+            else if (enemyCountDG > 450 && enemyCountDG <= 600) {
+                child.setVelocityX(0);
+            }
+            else if (enemyCountDG > 600) {
+                enemyCountDG = 0;
+            }
+        });
+        //ブルードラゴン処理
+        enemyDB.children.iterate(function (child) {
+            num++;
+            child.anims.play('enemyDB', true);
+            if (enemyCountDB < 300) {
+                child.setVelocityX(150);
+            }
+            else if (enemyCountDB > 300 && enemyCountDB <= 600) {
+                child.setVelocityX(-150);
+            }
+            else if (enemyCountDB > 600) {
+                enemyCountDB = 0;
+            }
+        });
+        //戦闘機：紫の処理
+        var num = 0;
+        enemyFP.children.iterate(function (child) {
+            child.anims.play('enemyFP', true);
+            var count = 0;
+            switch (num) {
+                case 0:
+                    count = enemyCountFP;
+                    break;
+                case 1:
+                    count = enemyCountFP1;
+                    break;
+                case 2:
+                    count = enemyCountFP2;
+                    break;
+            }
+            if (count > 400) {
+                bullets = enemyBullet_N.create(child.x, child.y + 30, 'enemyBullet');
+                bullets.setVelocityY(160);
+                game.sound.play('bullet2');
+                switch (num) {
+                    case 0:
+                        enemyCountFP = 0;
+                        break;
+                    case 1:
+                        enemyCountFP1 = 0;
+                        break;
+                    case 2:
+                        enemyCountFP2 = 0;
+                        break;
+                }
+            }
+            num++;
+        });
+        //戦闘機：青の処理
+        var num1 = 0;
+        enemyFB.children.iterate(function (child, enemyCountFB = 0) {
+            child.anims.play('enemyFB', true);
+            var count = 0;
+            switch (num1) {
+                case 0:
+                    count = enemyCountFB;
+                    break;
+                case 1:
+                    count = enemyCountFB1;
+                    break;
+                case 2:
+                    count = enemyCountFB2;
+                    break;
+            }
+            if (count > 450) {
+                bullets = enemyBullet_N.create(child.x, child.y + 30, 'enemyBullet');
+                bullets.setVelocityY(160);
+                bullets = enemyBullet_N.create(child.x, child.y + 30, 'enemyBullet');
+                bullets.setVelocityX(30);
+                bullets.setVelocityY(160);
+                bullets = enemyBullet_N.create(child.x, child.y + 30, 'enemyBullet');
+                bullets.setVelocityX(-30);
+                bullets.setVelocityY(160);
+                game.sound.play('bullet2');
+                switch (num1) {
+                    case 0:
+                        enemyCountFB = 0;
+                        break;
+                    case 1:
+                        enemyCountFB1 = 0;
+                        break;
+                    case 2:
+                        enemyCountFB2 = 0;
+                        break;
+                }
+            }
+            num1++;
+        });
+        //戦闘機：黄の処理
+        var num2 = 0;
+        enemyFY.children.iterate(function (child) {
+            child.anims.play('enemyFY', true);
+            var count = 0;
+            switch (num2) {
+                case 0:
+                    count = enemyCountFB;
+                    break;
+                case 1:
+                    count = enemyCountFB1;
+                    break;
+                case 2:
+                    count = enemyCountFB2;
+                    break;
+            }
+            if (count > 300) {
+                bullets = enemyBullet_N.create(child.x + 10, child.y + 30, 'enemyBullet');
+                bullets.setVelocityY(50);
+                bullets.setVelocityY(160);
+                bullets = enemyBullet_N.create(child.x - 10, child.y + 30, 'enemyBullet');
+                bullets.setVelocityY(50);
+                bullets.setVelocityY(160);
+                game.sound.play('bullet2');
+                switch (num2) {
+                    case 0:
+                        enemyCountFB = 0;
+                        break;
+                    case 1:
+                        enemyCountFB1 = 0;
+                        break;
+                    case 2:
+                        enemyCountFB2 = 0;
+                        break;
+                }
+            }
+            num2++;
+        });
+    }
+
+    //Bossの移動
+    function BossMove(game) {
+        boss.anims.play('boss', true);
+        bossCount++;
+        switch (bossState) {
+            //画面内に向かう
+            case 0:
+                if (boss.y > 150) {
+                    boss.setVelocityY(0);
+                    bossState = 1;
+                    game.sound.play('bossStop');
+                }
+                break;
+            //プレイヤーを捕捉
+            case 1:
+                if (player.x > boss.x) {
+                    boss.setVelocityX(100);
+                }
+                else if (player.x < boss.x) {
+                    boss.setVelocityX(-100);
+                }
+                if (player.x - 1 < boss.x && boss.x < player.x + 1) {
+                    bossState = Phaser.Math.Between(2, 5);
+                }
+                break;
+            //プレイヤーを射撃
+            case 2:
+                boss.setVelocityX(0);
+                var Bullet = enemyBullet_N.create(boss.x - 50, boss.y + 40, 'enemyBullet');
+                Bullet.setVelocityY(140);
+                Bullet = enemyBullet_N.create(boss.x + 50, boss.y + 40, 'enemyBullet');
+                Bullet.setVelocityY(140);
+                game.sound.play('bullet2');
+                bossState = 7;
+                break;
+            //プレイヤーに体当たり
+            case 3:
+                boss.setVelocityX(0);
+                boss.setVelocityY(170);
+                if (boss.y >= 500) {
+                    boss.setVelocityY(0);
+                    bossState = 6;
+                    game.sound.play('bossStop');
+                }
+                break;
+            //特殊弾
+            case 4:
+                boss.setVelocityX(0);
+                var Bullet = enemyBullet_S.create(boss.x, boss.y, 'enemyBullet2');
+                Bullet.setVelocityY(120);
+                bossState = 7;
+                game.sound.play('bullet3');
+                break;
+            //必殺技
+            case 5:
+                bossWait++;
+                if (bossWait < 400) {
+                    if (boss.x > 200) {
+                        boss.setVelocityX(-150);
+                    }
+                    else if (boss.x < 200) {
+                        boss.setVelocityX(150);
+                    }
+                    else if (boss.x == 200) {
+                        boss.setVelocityX(0);
+                    }
+                }
+                else if (bossWait == 400) {
+                    boss.setVelocityX(100);
+                }
+                else if (bossWait < 1200) {
+                    var Bullet = enemyBullet_S.create(boss.x, boss.y, 'enemyBullet2');
+                    Bullet.setVelocityY(130);
+                    if (boss.x > 300) {
+                        boss.setVelocityX(-100);
+                        game.sound.play('bullet3');
+                    }
+                    if (boss.x < 100) {
+                        boss.setVelocityX(100);
+                        game.sound.play('bullet3');
+                    }
+                }
+                else if (bossWait >= 1200) {
+                    boss.setVelocityX(0);
+                    bossWait = 0;
+                    bossState = 7;
+                }
+                break;
+            //プレイヤーから遠のく
+            case 6:
+                boss.setVelocityY(-180);
+                if (boss.y <= 150) {
+                    boss.setVelocityY(0);
+                    bossState = 7;
+                    game.sound.play('bossStop');
+                }
+                break;
+            //待機
+            case 7:
+                bossWait++;
+                if (bossWait >= 500) {
+                    bossState = 1;
+                    bossWait = 0;
+                }
+                break;
+        }
+        if (bossCount > 10) {
+            boss.setTint(0xffffff);
+            bossCount = 0;
+        }
+    }
+
+    //弾の流れ弾処理
+    function destroyBullet(OffScreenUP, bullet) {
+        bullet.setVelocityY(0);
+        bullet.destroy();
+    }
+
+    //敵の残り処理
+    function destroyEnemy(OffScreenDOWN, enemy) {
+        enemy.destroy();
+    }
+
+    //背景スクロール
+    function SetBackGround(OffScreenDOWN, backGround) {
+        backGround.setPosition(200, -325);
+    }
+
+    //プレイヤー撃破
+    function hitPlayer(player, enemy) {
+        var explo = explosion.create(player.x, player.y, 'explosion');
+        explo.setVelocityY(100);
+        explo.anims.play('explosion');
+        this.physics.pause();
+        player.destroy();
+        var pauseImage = this.add.image(200, 325, 'translucent');
+        var text = this.add.text(100, 400, '次へ:Enter');
+        text.setTint(0x000000);
+        text.setFontFamily("MPLUS1");
+        text.setFontSize(40);
+        scoreText.setText('');
+        specialText.setText('');
+        this.sound.play('explosionP');
+        this.music.stop();
+        this.music01.stop();
+        gameOver = true;
+    }
+
+    //弾に対するプレイヤー
+    function BulletPlayer(player, bullet) {
+        if (!playerSpecial) {
+            var explo = explosion.create(player.x, player.y, 'explosion');
+            explo.setVelocityY(100);
+            explo.anims.play('explosion');
+            this.physics.pause();
+            player.destroy();
+            var pauseImage = this.add.image(200, 325, 'translucent');
+            var text = this.add.text(100, 400, '次へ:Enter');
+            text.setTint(0x000000);
+            text.setFontFamily("MPLUS1");
+            text.setFontSize(40);
+            scoreText.setText('');
+            specialText.setText('');
+            this.sound.play('explosionP');
+            this.music.stop();
+            this.music01.stop();
+            gameOver = true;
+        }
+        else {
+            var explo = explosion.create(bullet.x, bullet.y, 'explosion');
+            explo.anims.play('explosion');
+            explo.setVelocityY(100);
+            this.sound.play('explosionE');
+            bullet.destroy();
+        }
+    }
+
+    //わかめくん撃破
+    function hitBulletW(enemyW, bullet) {
+        var explo = explosion.create(enemyW.x, enemyW.y, 'explosion');
+        explo.setVelocityY(100);
+        explo.anims.play('explosion');
+        enemyW.destroy();
+        bullet.destroy();
+        this.sound.play('explosionE');
+        score += 5;
+    }
+
+    //エイリアン撃破
+    function hitBulletA(enemyA, bullet) {
+        var explo = explosion.create(enemyA.x, enemyA.y, 'explosion');
+        explo.setVelocityY(100);
+        explo.anims.play('explosion');
+        enemyA.destroy();
+        bullet.destroy();
+        this.sound.play('explosionE');
+        score += 10;
+    }
+
+    //レッドドラゴン撃破
+    function hitBulletDR(enemyDR, bullet) {
+        var explo = explosion.create(enemyDR.x, enemyDR.y, 'explosion');
+        explo.setVelocityY(100);
+        explo.anims.play('explosion');
+        enemyDR.destroy();
+        bullet.destroy();
+        this.sound.play('explosionE');
+        score += 15;
+    }
+
+    //グリーンドラゴン撃破
+    function hitBulletDG(enemyDG, bullet) {
+        var explo = explosion.create(enemyDG.x, enemyDG.y, 'explosion');
+        explo.setVelocityY(100);
+        explo.anims.play('explosion');
+        enemyDG.destroy();
+        bullet.destroy();
+        this.sound.play('explosionE');
+        score += 15;
+    }
+
+    //ブルードラゴン撃破
+    function hitBulletDB(enemyDB, bullet) {
+        var explo = explosion.create(enemyDB.x, enemyDB.y, 'explosion');
+        explo.setVelocityY(100);
+        explo.anims.play('explosion');
+        enemyDB.destroy();
+        bullet.destroy();
+        this.sound.play('explosionE');
+        score += 15;
+    }
+
+    //戦闘機：紫　撃破
+    function hitBulletFP(enemyFP, bullet) {
+        var explo = explosion.create(enemyFP.x, enemyFP.y, 'explosion');
+        explo.setVelocityY(100);
+        explo.anims.play('explosion');
+        enemyFP.destroy();
+        bullet.destroy();
+        this.sound.play('explosionE');
+        score += 20;
+    }
+
+    //戦闘機：青　撃破
+    function hitBulletFB(enemyFB, bullet) {
+        var explo = explosion.create(enemyFB.x, enemyFB.y, 'explosion');
+        explo.setVelocityY(100);
+        explo.anims.play('explosion');
+        enemyFB.destroy();
+        bullet.destroy();
+        this.sound.play('explosionE');
+        score += 20;
+    }
+
+    //戦闘機：黄　撃破
+    function hitBulletFY(enemyFY, bullet) {
+        var explo = explosion.create(enemyFY.x, enemyFY.y, 'explosion');
+        explo.setVelocityY(100);
+        explo.anims.play('explosion');
+        enemyFY.destroy();
+        bullet.destroy();
+        this.sound.play('explosionE');
+        score += 20;
+    }
+
+    //ボスヒット処理
+    function hitBoss(boss, bullet) {
+        bullet.destroy();
+        boss.setTint(0xff0000);
+        bossHP--;
+        this.se01.play();
+    }
+
+    //爆発の削除
+    function destroyExplosion(OffScreenDOWN, explosion) {
+        explosion.destroy();
+    }
+
+    //シールド処理
+    function DefenceShield(shield, enemy) {
+        if (playerState1 == 'selectY' && playerSpecial) {
+            shieldHP--;
+            if (shieldHP <= 0) {
+                shield.setVisible(false);
+                shieldFlag = false;
+            }
+            enemy.destroy();
+            this.sound.play('shield');
+        }
+    }
+</script>
+
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>シューティングゲーム</title>
+    <link rel="icon" type="image/png" href="assets/Wakame.png">
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.15.1/dist/phaser-arcade-physics.min.js"></script>
+    
+</head>
+<body>
+    <%- include ('../scene/title.ejs') %>
+    <%- include ('../scene/select.ejs') %>
+    <%- include ('../scene/game.ejs') %>
+    <%- include ('../scene/result.ejs') %>
+    <script>
+        
+        var Keys;
+        
+        var config={
+            parent:'content',
+            type: Phaser.AUTO,
+            width: 400,
+            height:650,
+            physics: {
+                default: 'arcade',
+                arcade: {
+                    debug: false
+                }
+            },
+            fps:{
+                target:30,
+                forceSetTimeOut:true
+            },
+            scene:[
+                TitleScene,
+                SelectScene,
+                GameScene,        
+                ResultScene,        
+            ],
+        };
+
+    var game=new Phaser.Game(config);
+
+    </script>
+</body>
+</html>
